@@ -36,7 +36,7 @@ jobs:
         run: |
           cd util
           template='{"apiVersion":"core.oam.dev/v1alpha1","kind":"WorkloadDefinition","metadata":{"name":""},"spec":{"definitionRef":{"name":""}}}'
-          stuff=./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition")]' -o json --o-filter "$" | jq ' .[] | .[] | .["spec"] | .["names"] | .["kind"]')
+          stuff=./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition")]' -o json --o-filter "$" | jq ' .[] | .[] | .["spec"] | .["names"] | .["kind"]'
 
           for t in ${stuff[@]}; do
 
