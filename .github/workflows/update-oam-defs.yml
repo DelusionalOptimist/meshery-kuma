@@ -1,4 +1,4 @@
-name: Meshery-kuma Build and Releaser
+name: Meshery-kuma OAM
 on:
   push:
     branches:
@@ -43,11 +43,15 @@ jobs:
             name=`echo $t  | tr -d '"' | tr '[:upper:]' '[:lower:]'`
             definitionRef=$name.meshery.layer5.io
 
-            ./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition" && @.spec.names.kind=='$t')]' -o json --o-filter "$[0]" | jq > templates/oam/$(printf %s.meshery.layer5io.schema.json $name)
+            ./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition" && @.spec.names.kind=='$t')]' -o json --o-filter "$[0]" | jq > ../templates/oam/$(printf %s.meshery.layer5io.schema.json $name)
 
-            echo $template | jq ' ."metadata"."name" = '$t' | ."spec"."definitionRef"."name"="'$definitionRef'"' > templates/oam/$(printf %s_definition.json $name)
+            echo $template | jq ' ."metadata"."name" = '$t' | ."spec"."definitionRef"."name"="'$definitionRef'"' > ../templates/oam/$(printf %s_definition.json $name)
 
           done
+
+      - name: Cleanup
+        run: |
+          rm -rf util kuma-*
 
       # temporary step. will build docker image with templates instead
       - name: Push Templates
