@@ -1,0 +1,59 @@
+name: Meshery-kuma Build and Releaser
+on:
+  push:
+    branches:
+      - 'gen-oam'
+
+jobs:
+  oam:
+    name: Generate and push OAM definitions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+
+      - name: Get Kuma manifests
+        run: |
+          curl -L https://kuma.io/installer.sh | sh -
+          KUMA_VERSION=$(curl https://kuma.io/latest_version)
+          ./kuma-$KUMA_VERSION/bin/kumactl install crds > ~/kuma-crds.yml
+
+      - name: Bulild jsonschema util
+        run: |
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+          nvm install v14.15.3
+          nvm install-latest-npm
+          git clone https://github.com/layer5io/kubeopenapi-jsonschema util
+          cd util
+          npm i; npm i nexe -g
+          make linux
+
+      - name: Generate Workload definitions
+        run: |
+          cd util
+          template='{"apiVersion":"core.oam.dev/v1alpha1","kind":"WorkloadDefinition","metadata":{"name":""},"spec":{"definitionRef":{"name":""}}}'
+          stuff=./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition")]' -o json --o-filter "$" | jq ' .[] | .[] | .["spec"] | .["names"] | .["kind"]')
+
+          for t in ${stuff[@]}; do
+
+            name=`echo $t  | tr -d '"' | tr '[:upper:]' '[:lower:]'`
+            definitionRef=$name.meshery.layer5.io
+
+            ./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition" && @.spec.names.kind=='$t')]' -o json --o-filter "$[0]" | jq > templates/oam/$(printf %s.meshery.layer5io.schema.json $name)
+
+            echo $template | jq ' ."metadata"."name" = '$t' | ."spec"."definitionRef"."name"="'$definitionRef'"' > templates/oam/$(printf %s_definition.json $name)
+
+          done
+
+      # temporary step. will build docker image with templates instead
+      - name: Push Templates
+        run: |
+          git config user.name "Rudraksh Pareek"
+          git config user.email "rudrakshpareek3601@gmail.com"
+          git add ./templates
+          git commit -m "push latest OAM definitions and schemas"
+          git push origin gen-oam
