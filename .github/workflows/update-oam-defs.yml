@@ -43,7 +43,7 @@ jobs:
             name=`echo $t  | tr -d '"' | tr '[:upper:]' '[:lower:]'`
             definitionRef=$name.meshery.layer5.io
 
-            ./kubeopenapi-jsonschema --location ./kuma-crds.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition" && @.spec.names.kind=='$t')]..openAPIV3Schema.properties.spec' -o json --o-filter "$[0]" | jq > ../templates/oam/$(printf %s.meshery.layer5io.schema.json $name)
+            ./kubeopenapi-jsonschema --location ~/kuma-crds.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition" && @.spec.names.kind=='$t')]..openAPIV3Schema.properties.spec' -o json --o-filter "$[0]" | jq > ../templates/oam/$(printf %s.meshery.layer5io.schema.json $name)
 
             echo $template | jq ' ."metadata"."name" = '$t' | ."spec"."definitionRef"."name"="'$definitionRef'"' > ../templates/oam/$(printf %s_definition.json $name)
 
