@@ -36,14 +36,14 @@ jobs:
         run: |
           cd util
           template='{"apiVersion":"core.oam.dev/v1alpha1","kind":"WorkloadDefinition","metadata":{"name":""},"spec":{"definitionRef":{"name":""}}}'
-          crds=$(./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition")]' -o json --o-filter "$" | jq ' .[] | .[] | .["spec"] | .["names"] | .["kind"]')
+          crds=$(./kubeopenapi-jsonschema --location ~/kuma-crds.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition")]' -o json --o-filter "$" | jq ' .[] | .[] | .["spec"] | .["names"] | .["kind"]')
 
           for t in ${crds[@]}; do
 
             name=`echo $t  | tr -d '"' | tr '[:upper:]' '[:lower:]'`
             definitionRef=$name.meshery.layer5.io
 
-            ./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition" && @.spec.names.kind=='$t')]' -o json --o-filter "$[0]" | jq > ../templates/oam/$(printf %s.meshery.layer5io.schema.json $name)
+            ./kubeopenapi-jsonschema --location ~/kuma-crds.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition" && @.spec.names.kind=='$t')]' -o json --o-filter "$[0]" | jq > ../templates/oam/$(printf %s.meshery.layer5io.schema.json $name)
 
             echo $template | jq ' ."metadata"."name" = '$t' | ."spec"."definitionRef"."name"="'$definitionRef'"' > ../templates/oam/$(printf %s_definition.json $name)
 
@@ -56,8 +56,8 @@ jobs:
       # temporary step. will build docker image with templates instead
       - name: Push Templates
         run: |
-          git config user.name "Rudraksh Pareek"
-          git config user.email "rudrakshpareek3601@gmail.com"
+          git config user.name "l5io"
+          git config user.email "ci@layer5.io"
           git add ./templates
           git commit -m "push latest OAM definitions and schemas"
           git push origin gen-oam
