@@ -36,9 +36,9 @@ jobs:
         run: |
           cd util
           template='{"apiVersion":"core.oam.dev/v1alpha1","kind":"WorkloadDefinition","metadata":{"name":""},"spec":{"definitionRef":{"name":""}}}'
-          stuff=./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition")]' -o json --o-filter "$" | jq ' .[] | .[] | .["spec"] | .["names"] | .["kind"]'
+          crds=$(./kubeopenapi-jsonschema --location ~/kuma.yml -t yaml --filter '$[?(@.kind=="CustomResourceDefinition")]' -o json --o-filter "$" | jq ' .[] | .[] | .["spec"] | .["names"] | .["kind"]')
 
-          for t in ${stuff[@]}; do
+          for t in ${crds[@]}; do
 
             name=`echo $t  | tr -d '"' | tr '[:upper:]' '[:lower:]'`
             definitionRef=$name.meshery.layer5.io
