@@ -1,0 +1,12 @@
+{
+  "apiVersion": "core.oam.dev/v1alpha1",
+  "kind": "WorkloadDefinition",
+  "metadata": {
+    "name": "Retry"
+  },
+  "spec": {
+    "definitionRef": {
+      "name": "retry.meshery.layer5.io"
+    }
+  }
+}
